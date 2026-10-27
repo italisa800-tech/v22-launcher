@@ -1,0 +1,42 @@
+name: option-chain-site
+
+on:
+  schedule:
+    # cron is UTC.  03:30 UTC = 09:00 IST,  08:55 UTC = 14:25 IST   (Mon-Fri)
+    - cron: "30 3 * * 1-5"
+    - cron: "55 8 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How many minutes to stay up (max 345)"
+        default: "340"
+
+permissions:
+  contents: read
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355          # GitHub hard limit is 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install cloudflared
+        run: |
+          curl -fsSL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          sudo install -m 755 cloudflared /usr/local/bin/cloudflared
+
+      - name: Run site
+        env:
+          PRIVATE_REPO: ${{ secrets.PRIVATE_REPO }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GATE_PASSWORD: ${{ secrets.GATE_PASSWORD }}
+          GATE_LINK_KEY: ${{ secrets.GATE_LINK_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SYMBOL: ${{ vars.SYMBOL || 'NIFTY' }}
+          RUN_MINUTES: ${{ github.event.inputs.minutes || '340' }}
+        run: python run_site.py
