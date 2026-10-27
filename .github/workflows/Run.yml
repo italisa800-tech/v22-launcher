@@ -39,4 +39,5 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           SYMBOL: ${{ vars.SYMBOL || 'NIFTY' }}
           RUN_MINUTES: ${{ github.event.inputs.minutes || '340' }}
-        run: python run_site.py
+          PYTHONUNBUFFERED: "1"
+        run: python -u run_site.py
